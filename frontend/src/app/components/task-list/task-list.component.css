@@ -1,0 +1,17 @@
+.card {
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.text-decoration-line-through {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}

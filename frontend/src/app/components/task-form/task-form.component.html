@@ -1,0 +1,63 @@
+<div class="container">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>{{ isEditMode ? 'Edit Task' : 'Add New Task' }}</h2>
+    </div>
+    <div class="col-auto">
+      <a routerLink="/tasks" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Tasks
+      </a>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="d-flex justify-content-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading" class="card">
+    <div class="card-body">
+      <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="title" formControlName="title"
+            [ngClass]="{'is-invalid': formSubmitted && title?.invalid}">
+          <div *ngIf="formSubmitted && title?.invalid" class="invalid-feedback">
+            <div *ngIf="title?.errors?.['required']">Title is required.</div>
+            <div *ngIf="title?.errors?.['minlength']">Title must be at least 3 characters long.</div>
+            <div *ngIf="title?.errors?.['maxlength']">Title cannot exceed 100 characters.</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" rows="4" formControlName="description"
+            [ngClass]="{'is-invalid': formSubmitted && description?.invalid}"></textarea>
+          <div *ngIf="formSubmitted && description?.invalid" class="invalid-feedback">
+            <div *ngIf="description?.errors?.['required']">Description is required.</div>
+            <div *ngIf="description?.errors?.['minlength']">Description must be at least 5 characters long.</div>
+            <div *ngIf="description?.errors?.['maxlength']">Description cannot exceed 500 characters.</div>
+          </div>
+        </div>
+
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="completed" formControlName="completed">
+          <label class="form-check-label" for="completed">Mark as completed</label>
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button type="button" class="btn btn-secondary me-2" routerLink="/tasks">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            {{ isEditMode ? 'Update Task' : 'Create Task' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

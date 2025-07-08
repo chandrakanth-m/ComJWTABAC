@@ -1,0 +1,49 @@
+# Backend
+/backend/target/
+/backend/.mvn/
+/backend/mvnw
+/backend/mvnw.cmd
+/backend/.settings/
+/backend/.classpath
+/backend/.project
+/backend/.factorypath
+/backend/HELP.md
+
+# Frontend
+/frontend/node_modules/
+/frontend/.angular/
+/frontend/dist/
+/frontend/npm-debug.log
+/frontend/yarn-error.log
+/frontend/.pnpm-debug.log
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# IDE - Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# System Files
+.DS_Store
+Thumbs.db
