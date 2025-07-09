@@ -1,0 +1,62 @@
+<div class="profile-container" *ngIf="currentUser">
+  <div class="profile-card">
+    <div class="profile-header">
+      <h2>User Profile</h2>
+    </div>
+    
+    <div class="profile-content">
+      <div class="profile-info">
+        <div class="info-item">
+          <label>Username:</label>
+          <span class="info-value">{{ currentUser.username }}</span>
+        </div>
+        
+        <div class="info-item">
+          <label>Email:</label>
+          <span class="info-value">{{ currentUser.email }}</span>
+        </div>
+        
+        <div class="info-item">
+          <label>Roles:</label>
+          <div class="roles-container">
+            <span 
+              *ngFor="let role of currentUser.roles" 
+              class="badge"
+              [ngClass]="getRoleBadgeClass(role)"
+            >
+              {{ getRoleDisplayName(role) }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-actions">
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          routerLink="/tasks"
+        >
+          View Tasks
+        </button>
+        
+        <button 
+          type="button" 
+          class="btn btn-danger"
+          (click)="logout()"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="profile-container" *ngIf="!currentUser">
+  <div class="profile-card">
+    <div class="text-center">
+      <h3>Access Denied</h3>
+      <p>You need to be logged in to view this page.</p>
+      <button class="btn btn-primary" routerLink="/login">Login</button>
+    </div>
+  </div>
+</div>

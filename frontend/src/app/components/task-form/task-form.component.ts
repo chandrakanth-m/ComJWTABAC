@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Task } from '../../models/task.model';
 import { TaskService } from '../../services/task.service';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/auth.model';
 
 @Component({
   selector: 'app-task-form',
@@ -17,15 +19,23 @@ export class TaskFormComponent implements OnInit {
   submitting = false;
   errorMessage = '';
   formSubmitted = false;
+  currentUser: User | null = null;
+  currentTask: Task | null = null;
 
   constructor(
     private fb: FormBuilder,
     private taskService: TaskService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
+    this.currentUser = this.authService.getCurrentUser();
+    if (!this.currentUser) {
+      this.router.navigate(['/login']);
+      return;
+    }
     this.initForm();
     this.checkEditMode();
   }
@@ -51,6 +61,18 @@ export class TaskFormComponent implements OnInit {
     this.taskService.getTaskById(this.taskId!)
       .subscribe({
         next: (task) => {
+          this.currentTask = task;
+          
+          // Check if user can edit this task
+          if (!this.taskService.canEditTask(task)) {
+            this.errorMessage = 'You do not have permission to edit this task.';
+            this.loading = false;
+            setTimeout(() => {
+              this.router.navigate(['/tasks']);
+            }, 2000);
+            return;
+          }
+          
           this.taskForm.patchValue({
             title: task.title,
             description: task.description,
@@ -59,8 +81,8 @@ export class TaskFormComponent implements OnInit {
           this.loading = false;
         },
         error: (error) => {
-          this.errorMessage = 'Error loading task data. Please try again later.';
-          console.error('Error loading task data:', error);
+          console.error('Error loading task:', error);
+          this.errorMessage = 'Error loading task data. Please try again.';
           this.loading = false;
         }
       });
@@ -74,7 +96,8 @@ export class TaskFormComponent implements OnInit {
     }
 
     this.submitting = true;
-    const taskData: Task = this.taskForm.value;
+    this.errorMessage = '';
+    const taskData = this.taskForm.value;
 
     if (this.isEditMode) {
       this.updateTask(taskData);
@@ -83,34 +106,53 @@ export class TaskFormComponent implements OnInit {
     }
   }
 
-  createTask(taskData: Task): void {
+  createTask(taskData: Omit<Task, 'id' | 'owner'>): void {
     this.taskService.createTask(taskData)
       .subscribe({
         next: () => {
+          this.submitting = false;
           this.router.navigate(['/tasks']);
         },
         error: (error) => {
-          this.errorMessage = 'Error creating task. Please try again.';
+          this.errorMessage = error.error?.message || 'Error creating task. Please try again.';
           console.error('Error creating task:', error);
           this.submitting = false;
         }
       });
   }
 
-  updateTask(taskData: Task): void {
+  updateTask(taskData: Partial<Task>): void {
     this.taskService.updateTask(this.taskId!, taskData)
       .subscribe({
         next: () => {
+          this.submitting = false;
           this.router.navigate(['/tasks']);
         },
         error: (error) => {
-          this.errorMessage = 'Error updating task. Please try again.';
+          this.errorMessage = error.error?.message || 'Error updating task. Please try again.';
           console.error('Error updating task:', error);
           this.submitting = false;
         }
       });
   }
 
+  // Helper methods
   get title() { return this.taskForm.get('title'); }
   get description() { return this.taskForm.get('description'); }
+  get completed() { return this.taskForm.get('completed'); }
+
+  canEditCurrentTask(): boolean {
+    return this.currentTask ? this.taskService.canEditTask(this.currentTask) : true;
+  }
+
+  getPageTitle(): string {
+    return this.isEditMode ? 'Edit Task' : 'Create New Task';
+  }
+
+  getSubmitButtonText(): string {
+    if (this.submitting) {
+      return this.isEditMode ? 'Updating...' : 'Creating...';
+    }
+    return this.isEditMode ? 'Update Task' : 'Create Task';
+  }
 }

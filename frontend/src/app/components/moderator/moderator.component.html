@@ -1,0 +1,96 @@
+<div class="moderator-container">
+  <div class="moderator-header">
+    <h2><i class="fas fa-user-shield"></i> Moderator Panel</h2>
+    <p class="text-muted">Content moderation and task management</p>
+  </div>
+
+  <div class="moderator-content" *ngIf="hasModeratorAccess()">
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="moderator-card">
+          <div class="card-icon">
+            <i class="fas fa-eye"></i>
+          </div>
+          <div class="card-content">
+            <h4>Task Monitoring</h4>
+            <p>Monitor and review all tasks for compliance</p>
+            <button class="btn btn-warning" routerLink="/tasks">
+              Monitor Tasks
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="moderator-card">
+          <div class="card-icon">
+            <i class="fas fa-edit"></i>
+          </div>
+          <div class="card-content">
+            <h4>Content Moderation</h4>
+            <p>Edit and moderate task content as needed</p>
+            <button class="btn btn-warning" disabled>
+              Moderate Content
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="moderator-info">
+      <div class="alert alert-warning">
+        <h5><i class="fas fa-info-circle"></i> Moderator Privileges</h5>
+        <ul class="mb-0">
+          <li>View and monitor all tasks</li>
+          <li>Edit task content for compliance</li>
+          <li>Moderate user-generated content</li>
+          <li *ngIf="isAdmin()">Full administrative access (Admin role)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="current-user-info">
+      <h4>Current Moderator User</h4>
+      <div class="user-details" *ngIf="currentUser">
+        <p><strong>Username:</strong> {{ currentUser.username }}</p>
+        <p><strong>Email:</strong> {{ currentUser.email }}</p>
+        <p><strong>Roles:</strong> 
+          <span *ngFor="let role of currentUser.roles" 
+                class="badge"
+                [ngClass]="{
+                  'badge-danger': role === 'ROLE_ADMIN',
+                  'badge-warning': role === 'ROLE_MODERATOR',
+                  'badge-primary': role === 'ROLE_USER'
+                }"
+                class="me-1">
+            {{ role }}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="abac-demo" *ngIf="hasModeratorAccess()">
+      <h4>ABAC Policy Demonstration</h4>
+      <div class="policy-info">
+        <div class="alert alert-info">
+          <h6>Attribute-Based Access Control (ABAC) Rules:</h6>
+          <ul>
+            <li><strong>Moderators:</strong> Can view and edit all tasks</li>
+            <li><strong>Admins:</strong> Have all moderator privileges plus system administration</li>
+            <li><strong>Users:</strong> Can only manage their own tasks</li>
+            <li><strong>Task Ownership:</strong> Users can only modify tasks they created</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="access-denied" *ngIf="!hasModeratorAccess()">
+    <div class="alert alert-danger">
+      <h4><i class="fas fa-exclamation-triangle"></i> Access Denied</h4>
+      <p>You do not have moderator privileges to access this page.</p>
+      <p>This page requires MODERATOR or ADMIN role.</p>
+      <button class="btn btn-primary" routerLink="/tasks">Return to Tasks</button>
+    </div>
+  </div>
+</div>

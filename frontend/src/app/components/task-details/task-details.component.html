@@ -2,6 +2,10 @@
   <div class="row mb-4">
     <div class="col">
       <h2>Task Details</h2>
+      <p class="text-muted mb-0" *ngIf="currentUser">
+        <i class="bi bi-person-circle"></i> {{ currentUser.username }}
+        <span class="badge bg-secondary ms-2" *ngFor="let role of currentUser.roles">{{ role }}</span>
+      </p>
     </div>
     <div class="col-auto">
       <a routerLink="/tasks" class="btn btn-secondary">
@@ -10,8 +14,10 @@
     </div>
   </div>
 
-  <div *ngIf="errorMessage" class="alert alert-danger">
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
     {{ errorMessage }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
 
   <div *ngIf="loading" class="d-flex justify-content-center">
@@ -26,29 +32,78 @@
 
   <div *ngIf="!loading && task" class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Task #{{ task.id }}</h5>
+      <div>
+        <h5 class="mb-0">Task #{{ task.id }}</h5>
+        <small class="text-muted">
+          <i class="bi bi-person"></i> Owner: {{ getTaskOwnerDisplay() }}
+          <span class="ms-3">
+            <i class="bi bi-shield-check"></i> Access: {{ getPermissionLevel() }}
+          </span>
+        </small>
+      </div>
       <span class="badge" [ngClass]="task.completed ? 'bg-success' : 'bg-warning'">
+        <i class="bi" [ngClass]="task.completed ? 'bi-check-circle' : 'bi-clock'"></i>
         {{ task.completed ? 'Completed' : 'Pending' }}
       </span>
     </div>
     <div class="card-body">
       <h3 class="card-title">{{ task.title }}</h3>
       <p class="card-text">{{ task.description }}</p>
+      
+      <!-- ABAC Information Panel -->
+      <div class="card bg-light mt-3" *ngIf="isAdmin() || isModerator()">
+        <div class="card-body py-2">
+          <h6 class="card-title mb-2">
+            <i class="bi bi-info-circle"></i> ABAC Policy Information
+          </h6>
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">
+                <strong>Your Permissions:</strong><br>
+                <span class="badge bg-primary me-1" *ngIf="canEditTask()">Edit</span>
+                <span class="badge bg-danger me-1" *ngIf="canDeleteTask()">Delete</span>
+                <span class="badge bg-secondary" *ngIf="!canEditTask() && !canDeleteTask()">Read Only</span>
+              </small>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">
+                <strong>Access Rules:</strong><br>
+                • Owners: Full access<br>
+                • Admins: Full access to all tasks<br>
+                • Moderators: Edit access to all tasks<br>
+                • Users: Own tasks only
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="card-footer">
       <div class="d-flex justify-content-between">
         <div>
-          <button class="btn btn-success me-2" (click)="toggleTaskStatus()">
+          <button class="btn me-2" 
+            [ngClass]="canEditTask() ? (task.completed ? 'btn-warning' : 'btn-success') : 'btn-secondary'"
+            (click)="toggleTaskStatus()"
+            [disabled]="!canEditTask()">
             <i class="bi" [ngClass]="task.completed ? 'bi-x-circle' : 'bi-check-circle'"></i>
             {{ task.completed ? 'Mark as Pending' : 'Mark as Completed' }}
+            <small *ngIf="!canEditTask()" class="d-block">No Edit Permission</small>
           </button>
         </div>
         <div>
-          <a [routerLink]="['/edit', task.id]" class="btn btn-warning me-2">
+          <a [routerLink]="['/edit', task.id]" 
+            class="btn me-2"
+            [ngClass]="canEditTask() ? 'btn-warning' : 'btn-secondary'"
+            [class.disabled]="!canEditTask()">
             <i class="bi bi-pencil"></i> Edit
+            <small *ngIf="!canEditTask()" class="d-block">No Edit Permission</small>
           </a>
-          <button class="btn btn-danger" (click)="deleteTask()">
+          <button class="btn" 
+            [ngClass]="canDeleteTask() ? 'btn-danger' : 'btn-secondary'"
+            (click)="deleteTask()"
+            [disabled]="!canDeleteTask()">
             <i class="bi bi-trash"></i> Delete
+            <small *ngIf="!canDeleteTask()" class="d-block">No Delete Permission</small>
           </button>
         </div>
       </div>

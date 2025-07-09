@@ -1,7 +1,11 @@
 <div class="container">
   <div class="row mb-4">
     <div class="col">
-      <h2>{{ isEditMode ? 'Edit Task' : 'Add New Task' }}</h2>
+      <h2>{{ getPageTitle() }}</h2>
+      <p class="text-muted mb-0" *ngIf="currentUser">
+        <i class="bi bi-person-circle"></i> {{ currentUser.username }}
+        <span class="badge bg-secondary ms-2" *ngFor="let role of currentUser.roles">{{ role }}</span>
+      </p>
     </div>
     <div class="col-auto">
       <a routerLink="/tasks" class="btn btn-secondary">
@@ -10,8 +14,17 @@
     </div>
   </div>
 
-  <div *ngIf="errorMessage" class="alert alert-danger">
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
     {{ errorMessage }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+
+  <!-- ABAC Permission Info -->
+  <div *ngIf="isEditMode && currentTask && !canEditCurrentTask()" class="alert alert-warning">
+    <i class="bi bi-shield-exclamation me-2"></i>
+    <strong>Access Restricted:</strong> You can only edit tasks that you own.
+    <br><small class="text-muted">Task Owner: {{ currentTask.owner?.username || 'Unknown' }}</small>
   </div>
 
   <div *ngIf="loading" class="d-flex justify-content-center">
@@ -46,15 +59,41 @@
         </div>
 
         <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="completed" formControlName="completed">
-          <label class="form-check-label" for="completed">Mark as completed</label>
+          <input type="checkbox" class="form-check-input" id="completed" formControlName="completed"
+            [disabled]="isEditMode && !canEditCurrentTask()">
+          <label class="form-check-label" for="completed">
+            Mark as completed
+            <small class="text-muted" *ngIf="isEditMode && !canEditCurrentTask()">(Read-only)</small>
+          </label>
+        </div>
+
+        <!-- Task Ownership Info for Edit Mode -->
+        <div *ngIf="isEditMode && currentTask" class="mb-3">
+          <div class="card bg-light">
+            <div class="card-body py-2">
+              <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Task Owner:</strong> {{ currentTask.owner?.username || 'Unknown' }}
+                <span class="ms-2" *ngIf="canEditCurrentTask()">
+                  <i class="bi bi-check-circle text-success"></i> You can edit this task
+                </span>
+                <span class="ms-2" *ngIf="!canEditCurrentTask()">
+                  <i class="bi bi-x-circle text-danger"></i> Read-only access
+                </span>
+              </small>
+            </div>
+          </div>
         </div>
 
         <div class="d-flex justify-content-end">
-          <button type="button" class="btn btn-secondary me-2" routerLink="/tasks">Cancel</button>
-          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+          <button type="button" class="btn btn-secondary me-2" routerLink="/tasks">
+            <i class="bi bi-x-lg me-1"></i> Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" 
+            [disabled]="submitting || (isEditMode && !canEditCurrentTask())">
             <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-            {{ isEditMode ? 'Update Task' : 'Create Task' }}
+            <i *ngIf="!submitting" class="bi" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'" ></i>
+            {{ getSubmitButtonText() }}
           </button>
         </div>
       </form>

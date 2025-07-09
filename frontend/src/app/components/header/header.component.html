@@ -5,13 +5,47 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+      <!-- Left side navigation -->
+      <ul class="navbar-nav me-auto" *ngIf="isLoggedIn()">
         <li class="nav-item">
           <a class="nav-link" routerLink="/tasks" routerLinkActive="active">Tasks</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" routerLink="/add" routerLinkActive="active">Add Task</a>
         </li>
+        <li class="nav-item" *ngIf="isAdmin()">
+          <a class="nav-link" routerLink="/admin" routerLinkActive="active">Admin Panel</a>
+        </li>
+        <li class="nav-item" *ngIf="isModerator() || isAdmin()">
+          <a class="nav-link" routerLink="/moderator" routerLinkActive="active">Moderator Panel</a>
+        </li>
+      </ul>
+      
+      <!-- Right side navigation -->
+      <ul class="navbar-nav ms-auto">
+        <!-- Guest navigation -->
+        <ng-container *ngIf="!isLoggedIn()">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/login" routerLinkActive="active">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/register" routerLinkActive="active">Register</a>
+          </li>
+        </ng-container>
+        
+        <!-- Authenticated user navigation -->
+        <ng-container *ngIf="isLoggedIn() && currentUser">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-user"></i> {{ currentUser.username }}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <li><a class="dropdown-item" routerLink="/profile">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" (click)="logout()">Logout</a></li>
+            </ul>
+          </li>
+        </ng-container>
       </ul>
     </div>
   </div>

@@ -1,0 +1,56 @@
+<div class="login-container">
+  <div class="login-card">
+    <h2>Login</h2>
+    
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input 
+          type="text" 
+          id="username" 
+          formControlName="username" 
+          class="form-control"
+          [class.is-invalid]="username?.invalid && username?.touched"
+        >
+        <div class="invalid-feedback" *ngIf="username?.invalid && username?.touched">
+          <div *ngIf="username?.errors?.['required']">Username is required</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          class="form-control"
+          [class.is-invalid]="password?.invalid && password?.touched"
+        >
+        <div class="invalid-feedback" *ngIf="password?.invalid && password?.touched">
+          <div *ngIf="password?.errors?.['required']">Password is required</div>
+        </div>
+      </div>
+
+      <div class="alert alert-danger" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary btn-block"
+        [disabled]="loginForm.invalid || isLoading"
+      >
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status"></span>
+        {{ isLoading ? 'Logging in...' : 'Login' }}
+      </button>
+    </form>
+
+    <div class="text-center mt-3">
+      <p>Don't have an account? <a routerLink="/register">Register here</a></p>
+      <p class="text-muted">Demo accounts:</p>
+      <small class="text-muted">
+        Admin: admin/123456 | Moderator: moderator/123456 | User: user/123456
+      </small>
+    </div>
+  </div>
+</div>

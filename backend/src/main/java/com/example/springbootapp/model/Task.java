@@ -1,9 +1,7 @@
 package com.example.springbootapp.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.example.springbootapp.model.auth.User;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +19,15 @@ public class Task {
     private String title;
     private String description;
     private boolean completed;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+    
+    public Task(String title, String description, boolean completed, User owner) {
+        this.title = title;
+        this.description = description;
+        this.completed = completed;
+        this.owner = owner;
+    }
 }

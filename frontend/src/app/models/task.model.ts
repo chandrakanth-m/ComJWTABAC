@@ -3,4 +3,8 @@ export interface Task {
   title: string;
   description: string;
   completed: boolean;
+  owner?: {
+    id: number;
+    username: string;
+  };
 }

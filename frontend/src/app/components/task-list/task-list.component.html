@@ -2,9 +2,19 @@
   <div class="row mb-4">
     <div class="col">
       <h2>Task List</h2>
-      <p>Manage your tasks</p>
+      <p *ngIf="showAllTasks">Viewing all tasks (Admin/Moderator view)</p>
+      <p *ngIf="!showAllTasks">Viewing your tasks</p>
     </div>
-    <div class="col-auto">
+    <div class="col-auto d-flex gap-2">
+      <button 
+        *ngIf="isAdmin() || isModerator()" 
+        class="btn btn-outline-secondary"
+        (click)="toggleViewMode()"
+      >
+        <i class="bi bi-toggle-on" *ngIf="showAllTasks"></i>
+        <i class="bi bi-toggle-off" *ngIf="!showAllTasks"></i>
+        {{ showAllTasks ? 'Show My Tasks' : 'Show All Tasks' }}
+      </button>
       <a routerLink="/add" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Add New Task
       </a>
@@ -29,34 +39,91 @@
     <div class="col-md-12">
       <div class="card mb-4" *ngFor="let task of tasks">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="card-title" [ngClass]="{'text-decoration-line-through': task.completed}">
-                {{ task.title }}
-              </h5>
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center mb-2">
+                <h5 class="card-title mb-0 me-2" [ngClass]="{'text-decoration-line-through': task.completed}">
+                  {{ task.title }}
+                </h5>
+                <span class="badge" [ngClass]="{
+                  'bg-success': isOwnTask(task),
+                  'bg-info': !isOwnTask(task) && (isAdmin() || isModerator()),
+                  'bg-secondary': !isOwnTask(task) && !isAdmin() && !isModerator()
+                }">
+                  {{ isOwnTask(task) ? 'Your Task' : 'Owner: ' + getTaskOwnerDisplay(task) }}
+                </span>
+              </div>
               <p class="card-text">{{ task.description }}</p>
+              <small class="text-muted" *ngIf="showAllTasks">
+                Created by: {{ getTaskOwnerDisplay(task) }}
+              </small>
             </div>
-            <div>
-              <div class="form-check form-switch d-inline-block me-2">
+            <div class="d-flex flex-column align-items-end gap-2">
+              <div class="form-check form-switch" *ngIf="canEditTask(task)">
                 <input class="form-check-input" type="checkbox" [checked]="task.completed"
                   (change)="toggleTaskStatus(task)" id="task-{{task.id}}">
                 <label class="form-check-label" for="task-{{task.id}}">
                   {{ task.completed ? 'Completed' : 'Pending' }}
                 </label>
               </div>
-              <a [routerLink]="['/tasks', task.id]" class="btn btn-sm btn-info me-1">
-                <i class="bi bi-eye"></i> View
-              </a>
-              <a [routerLink]="['/edit', task.id]" class="btn btn-sm btn-warning me-1">
-                <i class="bi bi-pencil"></i> Edit
-              </a>
-              <button class="btn btn-sm btn-danger" (click)="deleteTask(task.id!)">
-                <i class="bi bi-trash"></i> Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+              <div class="form-check form-switch" *ngIf="!canEditTask(task)">
+                <input class="form-check-input" type="checkbox" [checked]="task.completed" disabled>
+                <label class="form-check-label text-muted">
+                  {{ task.completed ? 'Completed' : 'Pending' }} (Read-only)
+                </label>
+              </div>
+              <div class="btn-group" role="group">
+                <a [routerLink]="['/tasks', task.id]" class="btn btn-sm btn-outline-info">
+                  <i class="bi bi-eye"></i> View
+                </a>
+                <a [routerLink]="['/edit', task.id]" 
+                    class="btn btn-sm btn-outline-warning"
+                    *ngIf="canEditTask(task)">
+                   <i class="bi bi-pencil"></i> Edit
+                 </a>
+                 <button class="btn btn-sm btn-outline-danger" 
+                         (click)="deleteTask(task.id!)"
+                         *ngIf="canDeleteTask(task)">
+                   <i class="bi bi-trash"></i> Delete
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>
+ 
+   <!-- ABAC Information Panel -->
+   <div class="row mt-4" *ngIf="isAdmin() || isModerator()">
+     <div class="col-12">
+       <div class="card border-info">
+         <div class="card-header bg-info text-white">
+           <h6 class="mb-0"><i class="bi bi-shield-check"></i> ABAC Policy Information</h6>
+         </div>
+         <div class="card-body">
+           <div class="row">
+             <div class="col-md-6">
+               <h6>Your Current Permissions:</h6>
+               <ul class="list-unstyled">
+                 <li *ngIf="isAdmin()"><i class="bi bi-check-circle text-success"></i> Admin: Full access to all tasks</li>
+                 <li *ngIf="isModerator() && !isAdmin()"><i class="bi bi-check-circle text-warning"></i> Moderator: View and edit all tasks</li>
+                 <li><i class="bi bi-check-circle text-primary"></i> Can create new tasks</li>
+                 <li><i class="bi bi-check-circle text-primary"></i> Can manage your own tasks</li>
+               </ul>
+             </div>
+             <div class="col-md-6">
+               <h6>ABAC Rules Applied:</h6>
+               <ul class="list-unstyled">
+                 <li><i class="bi bi-info-circle text-info"></i> Task ownership determines edit permissions</li>
+                 <li><i class="bi bi-info-circle text-info"></i> Role-based access for viewing all tasks</li>
+                 <li><i class="bi bi-info-circle text-info"></i> Admin can delete any task</li>
+                 <li><i class="bi bi-info-circle text-info"></i> Users can only delete their own tasks</li>
+               </ul>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>
+ </div>
