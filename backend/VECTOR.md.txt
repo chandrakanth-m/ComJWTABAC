@@ -1,0 +1,33 @@
+
+docker run -d --name pgvector-container -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ragdb -p 5432:5432  pgvector/pgvector:pg17
+  
+Access the containers postgres shell
+>_ docker exec -it pgvector-container psql -U postgres -d ragdb
+
+create vector db
+>_ CREATE EXTENSION IF NOT EXISTS vector;
+
+Verify the installation:
+>_ SELECT extname FROM pg_extension;
+
+	expected output
+	vector
+	 plpgsql
+
+Test vector support:
+>_SELECT '[1,2,3]'::vector;
+
+Exit PostgreSQL:
+>_ \q
+
+CREATE TABLE embeddings (
+    id SERIAL PRIMARY KEY,
+    content TEXT,
+    embedding VECTOR(768)
+);
+
+CREATE INDEX embeddings_idx
+ON embeddings
+USING ivfflat (embedding vector_cosine_ops)
+WITH (lists = 100);
+
