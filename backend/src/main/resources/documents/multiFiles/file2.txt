@@ -1,0 +1,12 @@
+Product: Ethernet Service
+
+The Ethernet Service is designed for enterprise customers requiring dedicated connectivity.
+It offers guaranteed bandwidth and low latency.
+
+Key Features:
+- CIR (Committed Information Rate): configurable
+- Symmetric upload and download speeds
+- SLA-backed uptime guarantee
+- Static IP support
+
+This service is typically used for inter-office connectivity and mission-critical applications.

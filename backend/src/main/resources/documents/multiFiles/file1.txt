@@ -1,0 +1,12 @@
+Product: Basic Internet Plan
+
+The Basic Internet Plan provides high-speed internet connectivity for residential customers.
+It includes a default bandwidth of 100 Mbps with the option to upgrade.
+
+Key Features:
+- Download speed: up to 100 Mbps
+- Upload speed: up to 20 Mbps
+- Monthly billing cycle
+- Suitable for streaming and browsing
+
+The plan supports dynamic IP allocation and standard customer support.

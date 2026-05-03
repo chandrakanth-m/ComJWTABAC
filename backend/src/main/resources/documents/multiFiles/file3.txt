@@ -1,0 +1,12 @@
+Order Details and Contacts
+
+Order Notes allow users to provide additional instructions during order submission.
+These notes are optional but can help clarify special requirements.
+
+Contact Information includes:
+- Contact Name
+- Role (Technical, Billing, Administrative)
+- Address details
+- Phone and email
+
+Multiple contacts can be associated with a single order for better communication.

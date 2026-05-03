@@ -31,3 +31,4 @@ ON embeddings
 USING ivfflat (embedding vector_cosine_ops)
 WITH (lists = 100);
 
+admintechnoiot/chandrakanth-m
