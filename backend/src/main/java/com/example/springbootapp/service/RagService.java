@@ -67,6 +67,7 @@ public class RagService {
             for(Path file: Files.list(folder).toList()){
                 String fileName = file.getFileName().toString();
                 String text = Files.readString(file);
+                text = text.replace("Key Features:", "\n\nKey Features:\n");
                 String category ;
                 String product;
 
@@ -139,15 +140,18 @@ public class RagService {
         System.out.println(context);
 
         String prompt = """
-You are an extraction assistant.
+You are a strict extractor.
 
-Answer ONLY using the exact words from the context.
+Task:
+Find ONLY the value related to the requested field.
 
 Rules:
-- Keep the answer as short as possible
-- Do NOT form full sentences
-- Do NOT add explanations
-- Return only the exact value asked
+- Match the exact field name from context
+- Ignore similar fields
+- "download speed" is NOT "upload speed"
+- Return ONLY the matching value
+- No explanation
+- If not found return: NOT_FOUND
 
 Context:
 %s
@@ -168,13 +172,14 @@ Question:
         var queryEmbedding = embeddingModel.embed(query).content();
 
         String vector = toPgVector(queryEmbedding.vector());
-
+//        Add Threshold + limit starter
         List<String> results = jdbcTemplate.query(
                 """
                 SELECT content,document_name, embedding <-> ?::vector AS distance 
                 FROM embeddings
-                ORDER BY embedding <-> ?::vector ASC,id ASC
-                LIMIT 8
+              --  WHERE embedding <-> ? ::vector < 0.75 
+                ORDER BY distance ASC
+                LIMIT 5
                 """,
                 (rs, rowNum) -> {
                     double distance = rs.getDouble("distance");
@@ -182,13 +187,19 @@ Question:
                     String doc = rs.getString("document_name");
 
                     System.out.println("DIST: " + distance + " | DOC: " + doc);
+//                    System.out.println("CONTENT: " + content);
+                    System.out.println("-------------");
 
-                    if (distance < 0.8) {   // 👈 tune this later
-                        return "[" + doc + "] " + content;
-                    } else {
-                        return null;
-                    }
-                },vector,vector).stream().filter(Objects::nonNull).toList();
+                    return content; // 👈 NO FILTER HERE
+                },vector).stream().filter(Objects::nonNull).toList();
+
+        String normalized = query.toLowerCase();
+
+        if(normalized.contains("download")) {
+            results = results.stream()
+                    .filter(r -> r.toLowerCase().contains("download"))
+                    .toList();
+        }
 
         if (results.isEmpty()) {
             return Collections.singletonList("Not found in provided documents");
@@ -205,10 +216,10 @@ Question:
                 SELECT content,
                        document_name,
                        embedding <-> ?::vector AS distance,
-                       ts_rank(to_tsvector('english', content),
+                       ts_rank(content_tsv,
                                websearch_to_tsquery('english', ?)) AS keyword_score,
-                       ((1.0 - (embedding <-> ?::vector)) * 0.7 +
-                        ts_rank(to_tsvector('english', content),
+                       ((1 - (embedding <-> ?::vector)) * 0.7 +
+                        ts_rank(content_tsv,
                                 websearch_to_tsquery('english', ?)) * 0.3) AS final_score
                 FROM embeddings
                 WHERE category = ?
@@ -229,19 +240,74 @@ Question:
                             " | FINAL: " + finalScore +
                             " | DOC: " + doc);
 
-                    if (finalScore > 0.3) {
+                    /*if (finalScore > 0.4) {
                         return "[" + doc + "] " + content;
                     }
 
-                    return null;
+                    return null;*/
+                    return content;
                 },
                 vector, query, vector, query, category
         ).stream().filter(Objects::nonNull).toList();
+        String normalized = query.toLowerCase();
 
+        if(normalized.contains("download")) {
+            results = results.stream()
+                    .filter(r -> r.toLowerCase().contains("download"))
+                    .toList();
+        }
         if (results.isEmpty()) {
             return Collections.singletonList("Not found in provided documents");
         }
         return results;
+    }
+
+    public void debugRetrieval(String question, String category) {
+
+        System.out.println("=== DEBUG MODE (NO LLM) ===");
+
+        // Step 1: Generate embedding
+        var queryEmbedding = embeddingModel.embed(question).content();
+        String vector = toPgVector(queryEmbedding.vector());
+
+        System.out.println("QUESTION: " + question);
+        System.out.println("VECTOR (first 5 values): ");
+        for (int i = 0; i < 5; i++) {
+            System.out.print(queryEmbedding.vector()[i] + ", ");
+        }
+        System.out.println("\n--------------------------");
+
+        // Step 2: Query DB
+        List<String> results = jdbcTemplate.query(
+                """
+                SELECT content, document_name,
+                       embedding <-> ?::vector AS distance
+                FROM embeddings
+                WHERE (? IS NULL OR category = ?)
+                ORDER BY distance ASC
+                LIMIT 5
+                """,
+                (rs, rowNum) -> {
+                    double distance = rs.getDouble("distance");
+                    String content = rs.getString("content");
+                    String doc = rs.getString("document_name");
+
+//                    System.out.println("DIST: " + distance + " | DOC: " + doc);
+                    System.out.printf("DIST: %.3f | DOC: %s\n", distance, doc);
+                    System.out.println("CONTENT:\n" + content);
+                    System.out.println("====================================");
+
+                    return content;
+                },
+                vector, category, category
+        );
+
+        // Step 3: Build context
+        String context = String.join("\n---\n", results);
+
+        System.out.println("\n=== FINAL CONTEXT (USED BY LLM) ===");
+
+        System.out.println(context);
     }
 
 }

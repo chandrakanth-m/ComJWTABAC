@@ -25,7 +25,7 @@ public class RagController {
         if (request.getDocument() != null) {
             return ragService.ask(request.getQuestion(), request.getDocument());
         }
-
+       //  ragService.debugRetrieval("What is the download speed in basic internet plan?", "internet");
         return ragService.ask(request.getQuestion(),null    );
     }
 }
